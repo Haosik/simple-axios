@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
 import './App.css';
+import 'react-toastify/dist/ReactToastify.min.css';
 import http from './services/httpService';
-
-const endPoint = 'https://jsonplaceholder.typicode.com/posts';
+import { postsEndpoint } from './config';
 
 class App extends Component {
   state = {
@@ -11,7 +12,7 @@ class App extends Component {
 
   handleAdd = async () => {
     const obj = { title: 'a', body: 'b' };
-    const { data: post } = await http.post(endPoint, obj);
+    const { data: post } = await http.post(postsEndpoint, obj);
     console.log(post);
 
     const posts = [post, ...this.state.posts];
@@ -20,7 +21,7 @@ class App extends Component {
 
   handleUpdate = async post => {
     post.title = 'CHANGED title';
-    const { data } = await http.put(`${endPoint}/${post.id}`, post);
+    const { data } = await http.put(`${postsEndpoint}/${post.id}`, post);
     console.log(data);
 
     const posts = [...this.state.posts];
@@ -30,12 +31,13 @@ class App extends Component {
   };
 
   handleDelete = async post => {
+    // Remember current posts, to revert them back in case of error
     const initialPosts = [...this.state.posts];
     const posts = this.state.posts.filter(p => p.id !== post.id);
     this.setState({ posts });
 
     try {
-      await http.delete(`${endPoint}/${post.id}`);
+      await http.delete(`${postsEndpoint}/${post.id}`);
     } catch (err) {
       // err.request
       // err.response
@@ -46,14 +48,14 @@ class App extends Component {
       // Log error
       // Display some friendly message
       if (err.response && err.request.status === 404) {
-        alert('Seems like this post has already been deleted');
+        toast('Seems like this post has already been deleted');
       }
       this.setState({ posts: initialPosts });
     }
   };
 
   async componentDidMount() {
-    const { data: posts } = await http.get(endPoint);
+    const { data: posts } = await http.get(postsEndpoint);
     this.setState({ posts });
   }
 
@@ -89,6 +91,7 @@ class App extends Component {
             ))}
           </tbody>
         </table>
+        <ToastContainer />
       </React.Fragment>
     );
   }
